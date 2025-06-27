@@ -9,6 +9,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      SSH_USER: ubuntu
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -22,11 +25,11 @@ jobs:
 
       - name: Copy files to EC2
         run: |
-          rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa" ./ ${{ secrets.EC2_HOST }}:~/catalog-product
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa" ./ ${{ env.SSH_USER }}@${{ secrets.EC2_HOST }}:~/catalog-product
 
       - name: Build and run Docker on EC2
         run: |
-          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa ${{ env.SSH_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             cd ~/catalog-product
             docker stop catalog-product || true
             docker rm catalog-product || true
