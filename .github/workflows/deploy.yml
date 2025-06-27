@@ -45,7 +45,7 @@ jobs:
             sudo docker stop catalog-product || true
             sudo docker rm catalog-product || true
 
-            # Build the Docker image and run it on port 8080
+            # Build the Docker image and run it with auto-restart enabled
             sudo docker build -t catalog-product .
-            sudo docker run -d --name catalog-product -p 8080:8080 catalog-product
+            sudo docker run -d --name catalog-product --restart always -p $APP_PORT:$APP_PORT catalog-product
           EOF
