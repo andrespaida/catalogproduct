@@ -11,28 +11,41 @@ jobs:
 
     env:
       SSH_USER: ubuntu
+      APP_PORT: 8080  # Internal and external port
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up SSH
+      - name: Configure SSH access
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copy files to EC2
+      - name: Upload project to EC2
         run: |
           rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa" ./ ${{ env.SSH_USER }}@${{ secrets.EC2_HOST }}:~/catalog-product
 
-      - name: Build and run Docker on EC2
+      - name: Install Docker and deploy container
         run: |
           ssh -i ~/.ssh/id_rsa ${{ env.SSH_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            # Install Docker if it's not already installed
+            if ! command -v docker &> /dev/null; then
+              sudo apt update
+              sudo apt install -y docker.io
+              sudo systemctl enable docker
+              sudo systemctl start docker
+            fi
+
             cd ~/catalog-product
-            docker stop catalog-product || true
-            docker rm catalog-product || true
-            docker build -t catalog-product .
-            docker run -d --name catalog-product -p 4000:4000 catalog-product
+
+            # Stop and remove existing container if running
+            sudo docker stop catalog-product || true
+            sudo docker rm catalog-product || true
+
+            # Build the Docker image and run it on port 8080
+            sudo docker build -t catalog-product .
+            sudo docker run -d --name catalog-product -p 8080:8080 catalog-product
           EOF
