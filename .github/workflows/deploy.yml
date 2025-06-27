@@ -1,0 +1,35 @@
+name: Deploy catalog-product to EC2
+
+on:
+  push:
+    branches:
+      - qa
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy files to EC2
+        run: |
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa" ./ ${{ secrets.EC2_HOST }}:~/catalog-product
+
+      - name: Build and run Docker on EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_HOST }} << 'EOF'
+            cd ~/catalog-product
+            docker stop catalog-product || true
+            docker rm catalog-product || true
+            docker build -t catalog-product .
+            docker run -d --name catalog-product -p 4000:4000 catalog-product
+          EOF
