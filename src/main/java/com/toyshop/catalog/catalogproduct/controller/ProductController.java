@@ -8,7 +8,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
-@CrossOrigin(origins = "http://98.85.86.231") // 🔥 Permitir llamadas desde el frontend
+@CrossOrigin(origins = "http://98.85.86.231")
 public class ProductController {
 
     private final ProductService service;
