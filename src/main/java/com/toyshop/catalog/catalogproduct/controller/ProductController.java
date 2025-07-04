@@ -8,6 +8,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
+@CrossOrigin(origins = "http://107.20.77.47")
 public class ProductController {
 
     private final ProductService service;
